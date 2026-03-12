@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Triad Drill</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0e0e0e;
+  --panel:#161616;
+  --panel2:#1b1b1b;
+  --border:#252525;
+  --accent:#c8a84b;
+  --teal:#7fbfb0;
+  --wrong:#c85c5c;
+  --text:#e8e4da;
+  --muted:#4a4a4a;
+  --dim:#2e2e2e;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'IBM Plex Mono',monospace;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  overflow-x:hidden;
+}
+
+/* ── HEADER ── */
+header{
+  width:100%;
+  padding:11px 16px 9px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.header-left{display:flex;align-items:baseline;gap:10px;}
+header h1{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;color:var(--accent);}
+.header-sub{font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;}
+.header-stats{display:flex;gap:12px;align-items:center;}
+.hstat{text-align:center;}
+.hstat-val{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--accent);line-height:1;}
+.hstat-lbl{font-size:8px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+
+/* ── MAIN ── */
+main{width:100%;max-width:520px;padding:12px;display:flex;flex-direction:column;gap:11px;}
+
+/* ── PROGRESSION ── */
+.prog-section{display:flex;flex-direction:column;gap:5px;}
+.prog-top{display:flex;justify-content:space-between;align-items:baseline;}
+.prog-label{font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;}
+.prog-counter{font-size:11px;color:var(--accent);font-family:'IBM Plex Mono',monospace;}
+.prog-bar-track{
+  height:5px;
+  background:var(--dim);
+  border-radius:3px;
+  position:relative;
+  overflow:hidden;
+}
+.prog-bar-fill{
+  position:absolute;
+  top:0;left:0;
+  height:100%;
+  background:var(--teal);
+  border-radius:3px;
+  transition:width .25s ease;
+}
+.prog-warning{
+  font-size:10px;
+  letter-spacing:1px;
+  color:var(--wrong);
+  text-align:right;
+  height:14px;
+  opacity:0;
+  transition:opacity .2s;
+}
+.prog-warning.show{opacity:1;}
+
+/* ── TIMER ── */
+.timer-track{
+  height:3px;
+  background:var(--dim);
+  border-radius:2px;
+  overflow:hidden;
+}
+.timer-fill{
+  height:100%;
+  border-radius:2px;
+  transition:background .3s;
+}
+
+/* ── TRIAD CARD ── */
+.triad-card{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:4px;
+  padding:14px 12px 12px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  position:relative;
+}
+.card-meta{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.card-type-badge{
+  font-size:9px;
+  letter-spacing:2px;
+  color:var(--muted);
+  text-transform:uppercase;
+  border:1px solid var(--dim);
+  border-radius:2px;
+  padding:2px 7px;
+}
+.card-inv-badge{
+  font-size:9px;
+  letter-spacing:1.5px;
+  color:var(--muted);
+  text-transform:uppercase;
+}
+.missing-label{
+  text-align:center;
+  font-size:9px;
+  letter-spacing:2px;
+  color:var(--muted);
+  text-transform:uppercase;
+}
+
+/* ── NOTE BUBBLES ── */
+.bubbles-row{
+  display:flex;
+  justify-content:center;
+  gap:8px;
+  align-items:stretch;
+}
+.note-bubble{
+  flex:1;
+  max-width:120px;
+  background:var(--panel2);
+  border:1px solid var(--border);
+  border-radius:3px;
+  padding:10px 6px 8px;
+  text-align:center;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  transition:border-color .15s, background .15s;
+}
+.note-bubble.is-missing{
+  border-color:var(--accent);
+  background:rgba(200,168,75,0.07);
+  position:relative;
+}
+.note-bubble.is-missing::before{
+  content:'?';
+  font-family:'Bebas Neue',sans-serif;
+  font-size:38px;
+  color:rgba(200,168,75,0.25);
+  line-height:1;
+  display:block;
+  margin-bottom:2px;
+}
+.note-bubble.reveal-correct{
+  border-color:var(--teal);
+  background:rgba(127,191,176,0.12);
+  animation:pulseCorrect .4s ease;
+}
+.note-bubble.reveal-wrong{
+  border-color:var(--wrong);
+  background:rgba(200,92,92,0.12);
+}
+@keyframes pulseCorrect{0%{transform:scale(1)}50%{transform:scale(1.04)}100%{transform:scale(1)}}
+
+.bubble-note{
+  font-family:'IBM Plex Mono',monospace;
+  font-weight:600;
+  font-size:22px;
+  color:var(--accent);
+  letter-spacing:1px;
+  line-height:1;
+  min-height:26px;
+}
+.bubble-interval{
+  font-size:9px;
+  color:var(--teal);
+  letter-spacing:1px;
+  text-transform:uppercase;
+}
+.bubble-degree{
+  font-size:9px;
+  color:var(--muted);
+  letter-spacing:.5px;
+}
+.bubble-hidden .bubble-note,
+.bubble-hidden .bubble-interval,
+.bubble-hidden .bubble-degree{ visibility:hidden; }
+
+/* ── STAFF ── */
+.staff-wrap{
+  display:flex;
+  justify-content:center;
+  background:var(--panel2);
+  border:1px solid var(--border);
+  border-radius:3px;
+  padding:6px 4px 2px;
+}
+svg.staff{overflow:visible;}
+
+/* ── FEEDBACK LINE ── */
+.feedback-line{
+  text-align:center;
+  font-size:10px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  height:16px;
+  color:var(--teal);
+  transition:color .15s;
+}
+.feedback-line.wrong{color:var(--wrong);}
+.feedback-line.timeout{color:rgba(200,92,92,0.7);}
+
+/* ── ANSWER GRID ── */
+.answer-section{display:flex;flex-direction:column;gap:6px;}
+.answer-section-label{font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;}
+.note-grid{
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:5px;
+}
+.note-btn{
+  background:var(--panel);
+  border:1px solid var(--border);
+  color:var(--text);
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;
+  letter-spacing:.5px;
+  padding:10px 2px;
+  border-radius:3px;
+  cursor:pointer;
+  transition:background .12s,border-color .12s,transform .08s;
+  text-align:center;
+  line-height:1.2;
+}
+.note-btn:active{transform:scale(.93);}
+.note-btn.correct{background:var(--teal);border-color:var(--teal);color:#000;}
+.note-btn.wrong{background:var(--wrong);border-color:var(--wrong);color:#fff;}
+.note-btn:disabled{opacity:.4;cursor:default;}
+
+/* ── UNLOCK TOAST ── */
+.unlock-toast{
+  position:fixed;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%) scale(.85);
+  background:var(--panel);
+  border:1px solid var(--accent);
+  border-radius:4px;
+  padding:20px 28px;
+  text-align:center;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity .2s, transform .2s;
+  z-index:100;
+  min-width:200px;
+}
+.unlock-toast.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
+.unlock-toast-title{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--accent);letter-spacing:3px;}
+.unlock-toast-body{font-size:10px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;}
+
+/* ── SETTINGS TOGGLE ── */
+.btn{
+  background:transparent;
+  border:1px solid var(--border);
+  color:var(--muted);
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  padding:9px 12px;
+  cursor:pointer;
+  border-radius:3px;
+  transition:border-color .15s,color .15s;
+  width:100%;
+}
+.btn:hover{border-color:var(--accent);color:var(--accent);}
+.btn.danger{border-color:var(--wrong);color:var(--wrong);}
+.btn.danger:hover{background:var(--wrong);color:#fff;}
+
+/* ── CONFIG ── */
+.cfg-panel{display:none;flex-direction:column;gap:10px;}
+.cfg-panel.open{display:flex;}
+.config-section{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:4px;
+  padding:12px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.config-title{font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;padding-bottom:6px;border-bottom:1px solid var(--dim);}
+.cfg-row{display:flex;align-items:center;gap:10px;}
+.cfg-row label:first-child{font-size:11px;color:var(--text);flex:1;letter-spacing:.5px;}
+.range-hint{font-size:9px;color:var(--muted);letter-spacing:.5px;line-height:1.6;margin-top:2px;}
+
+/* TOGGLE */
+.toggle{position:relative;width:36px;height:20px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;inset:0;background:var(--dim);border-radius:20px;cursor:pointer;transition:background .2s;}
+.toggle-slider::before{content:'';position:absolute;width:14px;height:14px;left:3px;bottom:3px;background:var(--muted);border-radius:50%;transition:transform .2s,background .2s;}
+.toggle input:checked+.toggle-slider{background:var(--accent);}
+.toggle input:checked+.toggle-slider::before{transform:translateX(16px);background:#000;}
+
+/* TYPE BUTTONS */
+.type-grid{display:flex;gap:5px;}
+.type-btn{
+  flex:1;
+  background:var(--panel2);
+  border:1px solid var(--border);
+  color:var(--muted);
+  font-family:'IBM Plex Mono',monospace;
+  font-size:9px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  padding:8px 4px;
+  cursor:pointer;
+  border-radius:3px;
+  transition:all .15s;
+  text-align:center;
+}
+.type-btn[data-t="major"].on{background:#c8a84b;border-color:#c8a84b;color:#000;}
+.type-btn[data-t="minor"].on{background:#7fbfb0;border-color:#7fbfb0;color:#000;}
+.type-btn[data-t="dim"].on{background:#c85c5c;border-color:#c85c5c;color:#000;}
+.type-btn[data-t="aug"].on{background:#9b7fc8;border-color:#9b7fc8;color:#000;}
+
+/* INV BUTTONS */
+.inv-grid{display:flex;gap:5px;}
+.inv-btn{
+  flex:1;
+  background:var(--panel2);
+  border:1px solid var(--border);
+  color:var(--muted);
+  font-family:'IBM Plex Mono',monospace;
+  font-size:9px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  padding:8px 4px;
+  cursor:pointer;
+  border-radius:3px;
+  transition:all .15s;
+  text-align:center;
+}
+.inv-btn.on{background:var(--teal);border-color:var(--teal);color:#000;}
+
+/* SPEED */
+.speed-grid{display:flex;gap:5px;}
+.speed-btn{
+  flex:1;
+  background:var(--panel2);
+  border:1px solid var(--border);
+  color:var(--muted);
+  font-family:'IBM Plex Mono',monospace;
+  font-size:9px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  padding:8px 4px;
+  cursor:pointer;
+  border-radius:3px;
+  transition:all .15s;
+  text-align:center;
+}
+.speed-btn.on{background:var(--accent);border-color:var(--accent);color:#000;}
+
+/* MISSING POSITION */
+.pos-grid{display:flex;gap:5px;}
+.pos-btn{
+  flex:1;
+  background:var(--panel2);
+  border:1px solid var(--border);
+  color:var(--muted);
+  font-family:'IBM Plex Mono',monospace;
+  font-size:9px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  padding:8px 4px;
+  cursor:pointer;
+  border-radius:3px;
+  transition:all .15s;
+  text-align:center;
+}
+.pos-btn.on{background:rgba(200,168,75,0.2);border-color:var(--accent);color:var(--accent);}
+
+/* FLASH ANIMS */
+@keyframes flashUnlock{0%,100%{background:var(--bg)}40%{background:rgba(127,191,176,0.08)}}
+@keyframes flashLock{0%,100%{background:var(--bg)}40%{background:rgba(200,92,92,0.08)}}
+.flash-unlock{animation:flashUnlock .6s ease;}
+.flash-lock{animation:flashLock .6s ease;}
+
+/* streak dots */
+.streak-row{display:flex;gap:3px;justify-content:center;flex-wrap:wrap;}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--dim);}
+.sdot.h{background:var(--teal);}
+.sdot.m{background:var(--wrong);}
+
+/* ── TAB BAR ── */
+.tab-bar{width:100%;display:flex;border-bottom:1px solid var(--border);max-width:520px;}
+.tab-btn{flex:1;padding:10px 4px;text-align:center;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:color .2s,border-color .2s;background:none;border-top:none;border-left:none;border-right:none;font-family:'IBM Plex Mono',monospace;}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+/* ── SCREENS ── */
+.screen{display:none;}
+.screen.active{display:block;}
+
+/* ── DIATONIC DRILL ── */
+.key-prompt-card{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:4px;
+  padding:18px 12px 14px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  align-items:center;
+}
+.key-prompt-label{font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;}
+.key-prompt-key{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:52px;color:var(--accent);letter-spacing:2px;line-height:1;}
+.key-prompt-degree{font-size:13px;color:var(--text);letter-spacing:2px;text-align:center;margin-top:2px;}
+.key-prompt-quality{font-size:10px;color:var(--teal);letter-spacing:2px;text-transform:uppercase;height:14px;}
+.key-prompt-name{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:26px;color:rgba(200,168,75,0.5);letter-spacing:2px;height:34px;line-height:1;}
+
+.degree-chips{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;margin-top:2px;}
+.degree-chip{
+  font-size:9px;letter-spacing:1px;text-transform:uppercase;
+  padding:3px 8px;border-radius:2px;border:1px solid var(--dim);
+  color:var(--muted);background:var(--panel2);
+}
+.degree-chip.unlocked{border-color:var(--border);color:rgba(232,228,218,0.4);}
+.degree-chip.current{border-color:var(--accent);color:var(--accent);background:rgba(200,168,75,0.08);}
+
+.quality-badge{
+  font-size:10px;letter-spacing:1.5px;text-transform:uppercase;
+  padding:3px 10px;border-radius:2px;border:1px solid var(--dim);color:var(--muted);
+}
+.quality-badge.major{border-color:rgba(200,168,75,0.4);color:var(--accent);}
+.quality-badge.minor{border-color:rgba(127,191,176,0.4);color:var(--teal);}
+.quality-badge.dim{border-color:rgba(200,92,92,0.4);color:var(--wrong);}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Triad Drill</h1>
+    <span class="header-sub" id="hdr-sub">C Major · Root</span>
+  </div>
+  <div class="header-stats">
+    <div class="hstat"><div class="hstat-val" id="h-correct">0</div><div class="hstat-lbl">Correct</div></div>
+    <div class="hstat"><div class="hstat-val" id="h-streak">0</div><div class="hstat-lbl">Streak</div></div>
+    <div class="hstat"><div class="hstat-val" id="h-pct">—</div><div class="hstat-lbl">Acc</div></div>
+  </div>
+</header>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('triads')">Missing Note</button>
+  <button class="tab-btn" onclick="switchTab('diatonic')">Diatonic Chords</button>
+</div>
+
+<div class="screen active" id="screen-triads">
+<main>
+
+  <div class="prog-section">
+    <div class="prog-top">
+      <span class="prog-label" id="prog-label">Mastering: C Major</span>
+      <span class="prog-counter" id="prog-counter">0 / 5</span>
+    </div>
+    <div class="prog-bar-track">
+      <div class="prog-bar-fill" id="prog-fill" style="width:0%"></div>
+    </div>
+    <div class="prog-warning" id="prog-warn"></div>
+  </div>
+
+  <div class="timer-track">
+    <div class="timer-fill" id="timer-fill" style="width:100%;background:var(--teal);"></div>
+  </div>
+
+  <div class="triad-card" id="triad-card">
+    <div class="card-meta">
+      <span class="card-type-badge" id="type-badge">Major</span>
+      <span class="card-inv-badge" id="inv-badge">Root Position</span>
+    </div>
+    <div id="chord-name-display" style="text-align:center;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:26px;letter-spacing:2px;color:var(--accent);line-height:1;display:none;"></div>
+    <div class="missing-label" id="missing-label">Name the missing note</div>
+    <div class="bubbles-row" id="bubbles-row"></div>
+    <div class="staff-wrap" id="staff-wrap" style="display:none;"><svg class="staff" id="staff-svg" width="210" height="100" viewBox="0 0 210 100"></svg></div>
+  </div>
+
+  <div class="feedback-line" id="feedback"></div>
+  <div class="streak-row" id="streak-row"></div>
+
+  <div class="answer-section">
+    <div class="answer-section-label">Name the missing note</div>
+    <div class="note-grid" id="note-grid"></div>
+  </div>
+
+  <button class="btn" id="cfg-btn" onclick="toggleCfg()">Settings ▾</button>
+  <div class="cfg-panel" id="cfg-panel">
+
+    <div class="config-section">
+      <div class="config-title">Triad Types in Pool</div>
+      <div class="type-grid">
+        <button class="type-btn on" data-t="major" onclick="toggleType(this)">Major</button>
+        <button class="type-btn on" data-t="minor" onclick="toggleType(this)">Minor</button>
+        <button class="type-btn on" data-t="dim"   onclick="toggleType(this)">Dim</button>
+        <button class="type-btn on" data-t="aug"   onclick="toggleType(this)">Aug</button>
+      </div>
+      <div class="range-hint">Types rotate into the pool as you unlock more triads.</div>
+    </div>
+
+    <div class="config-section">
+      <div class="config-title">Missing Note Position</div>
+      <div class="pos-grid">
+        <button class="pos-btn on" data-p="0" onclick="togglePos(this)">Root</button>
+        <button class="pos-btn on" data-p="1" onclick="togglePos(this)">3rd</button>
+        <button class="pos-btn on" data-p="2" onclick="togglePos(this)">5th</button>
+      </div>
+      <div class="range-hint">Which position in the triad can be hidden.</div>
+    </div>
+
+    <div class="config-section">
+      <div class="config-title">Inversions in Pool</div>
+      <div class="inv-grid">
+        <button class="inv-btn on" data-i="0" onclick="toggleInv(this)">Root Pos.</button>
+        <button class="inv-btn"    data-i="1" onclick="toggleInv(this)">1st Inv.</button>
+        <button class="inv-btn"    data-i="2" onclick="toggleInv(this)">2nd Inv.</button>
+      </div>
+    </div>
+
+    <div class="config-section">
+      <div class="config-title">Timer Speed</div>
+      <div class="speed-grid">
+        <button class="speed-btn" data-s="14" onclick="setSpeed(this)">Slow</button>
+        <button class="speed-btn on" data-s="9" onclick="setSpeed(this)">Normal</button>
+        <button class="speed-btn" data-s="5" onclick="setSpeed(this)">Fast</button>
+        <button class="speed-btn" data-s="2.5" onclick="setSpeed(this)">Brutal</button>
+      </div>
+    </div>
+
+    <div class="config-section">
+      <div class="config-title">Display</div>
+      <div class="cfg-row">
+        <label>Show chord name (e.g. "C Major")</label>
+        <label class="toggle"><input type="checkbox" id="show-chordname" checked onchange="redraw()"><span class="toggle-slider"></span></label>
+      </div>
+      <div class="cfg-row">
+        <label>Show staff notation</label>
+        <label class="toggle"><input type="checkbox" id="show-staff" onchange="redraw()"><span class="toggle-slider"></span></label>
+      </div>
+      <div class="cfg-row">
+        <label>Show interval labels (3rd / 5th)</label>
+        <label class="toggle"><input type="checkbox" id="show-intervals" checked onchange="redraw()"><span class="toggle-slider"></span></label>
+      </div>
+      <div class="cfg-row">
+        <label>Show scale degrees (1 / 3 / 5)</label>
+        <label class="toggle"><input type="checkbox" id="show-degrees" onchange="redraw()"><span class="toggle-slider"></span></label>
+      </div>
+      <div class="cfg-row">
+        <label>Reveal correct on wrong answer</label>
+        <label class="toggle"><input type="checkbox" id="reveal-on-wrong" checked><span class="toggle-slider"></span></label>
+      </div>
+    </div>
+
+    <div class="config-section">
+      <div class="config-title">Progression</div>
+      <div class="cfg-row">
+        <label>Hits to unlock next triad</label>
+        <span style="font-size:13px;color:var(--accent);letter-spacing:1px;" id="unlock-val">5</span>
+      </div>
+      <input type="range" min="3" max="12" value="5" id="unlock-range"
+        style="width:100%;accent-color:var(--accent);margin-top:4px;"
+        oninput="document.getElementById('unlock-val').textContent=this.value;UNLOCK_NEEDED=parseInt(this.value);updateProgUI();">
+      <div class="cfg-row" style="margin-top:4px;">
+        <label>Misses to drop back</label>
+        <span style="font-size:13px;color:var(--accent);letter-spacing:1px;" id="drop-val">3</span>
+      </div>
+      <input type="range" min="1" max="6" value="3" id="drop-range"
+        style="width:100%;accent-color:var(--accent);margin-top:4px;"
+        oninput="document.getElementById('drop-val').textContent=this.value;DROP_NEEDED=parseInt(this.value);updateProgUI();">
+    </div>
+
+    <button class="btn danger" onclick="resetAll()">Reset All Progress</button>
+  </div>
+
+</main>
+</div>
+
+<!-- DIATONIC CHORD DRILL -->
+<div class="screen" id="screen-diatonic">
+<main>
+
+  <div class="prog-section">
+    <div class="prog-top">
+      <span class="prog-label" id="d-prog-label">Unlock next: —</span>
+      <span class="prog-counter" id="d-prog-counter">0 / 5</span>
+    </div>
+    <div class="prog-bar-track">
+      <div class="prog-bar-fill" id="d-prog-fill" style="width:0%"></div>
+    </div>
+    <div class="prog-warning" id="d-prog-warn"></div>
+  </div>
+
+  <div class="timer-track">
+    <div class="timer-fill" id="d-timer-fill" style="width:100%;background:var(--teal);"></div>
+  </div>
+
+  <div class="key-prompt-card" id="d-card">
+    <div class="key-prompt-label">Key</div>
+    <div class="key-prompt-key" id="d-key">C</div>
+    <div class="key-prompt-degree" id="d-degree">What is the <strong>I</strong> chord?</div>
+    <div class="degree-chips" id="d-degree-chips"></div>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:4px;">
+      <div class="quality-badge" id="d-quality-badge">Major</div>
+      <div class="key-prompt-name" id="d-chord-name"></div>
+    </div>
+  </div>
+
+  <div class="feedback-line" id="d-feedback"></div>
+  <div class="streak-row" id="d-streak-row"></div>
+
+  <div class="answer-section">
+    <div class="answer-section-label">Name the root note of that chord</div>
+    <div class="note-grid" id="d-note-grid"></div>
+  </div>
+
+  <button class="btn" id="d-cfg-btn" onclick="dToggleCfg()">Settings ▾</button>
+  <div class="cfg-panel" id="d-cfg-panel">
+
+    <div class="config-section">
+      <div class="config-title">Hints &amp; Reveals</div>
+      <div class="cfg-row">
+        <label>Show Major / Minor / Dim quality</label>
+        <label class="toggle"><input type="checkbox" id="d-show-quality" checked onchange="dRedraw()"><span class="toggle-slider"></span></label>
+      </div>
+      <div class="cfg-row">
+        <label>Show chord name after answer</label>
+        <label class="toggle"><input type="checkbox" id="d-show-name" checked><span class="toggle-slider"></span></label>
+      </div>
+      <div class="cfg-row">
+        <label>Show scale degree chips</label>
+        <label class="toggle"><input type="checkbox" id="d-show-chips" checked onchange="dRedraw()"><span class="toggle-slider"></span></label>
+      </div>
+    </div>
+
+    <div class="config-section">
+      <div class="config-title">Timer Speed</div>
+      <div class="speed-grid">
+        <button class="speed-btn" data-s="14" onclick="dSetSpeed(this)">Slow</button>
+        <button class="speed-btn on" data-s="9" onclick="dSetSpeed(this)">Normal</button>
+        <button class="speed-btn" data-s="5" onclick="dSetSpeed(this)">Fast</button>
+        <button class="speed-btn" data-s="2.5" onclick="dSetSpeed(this)">Brutal</button>
+      </div>
+    </div>
+
+    <div class="config-section">
+      <div class="config-title">Progression</div>
+      <div class="cfg-row">
+        <label>Hits to unlock next</label>
+        <span style="font-size:13px;color:var(--accent);" id="d-unlock-val">5</span>
+      </div>
+      <input type="range" min="3" max="12" value="5" id="d-unlock-range"
+        style="width:100%;accent-color:var(--accent);margin-top:4px;"
+        oninput="document.getElementById('d-unlock-val').textContent=this.value;D_UNLOCK_NEEDED=parseInt(this.value);dUpdateProgUI();">
+      <div class="cfg-row" style="margin-top:8px;">
+        <label>Misses to drop back</label>
+        <span style="font-size:13px;color:var(--accent);" id="d-drop-val">3</span>
+      </div>
+      <input type="range" min="1" max="6" value="3" id="d-drop-range"
+        style="width:100%;accent-color:var(--accent);margin-top:4px;"
+        oninput="document.getElementById('d-drop-val').textContent=this.value;D_DROP_NEEDED=parseInt(this.value);dUpdateProgUI();">
+    </div>
+
+    <button class="btn danger" onclick="dResetAll()">Reset Diatonic Progress</button>
+  </div>
+
+</main>
+</div>
+
+<div class="unlock-toast" id="unlock-toast">
+  <div class="unlock-toast-title" id="toast-title">Unlocked!</div>
+  <div class="unlock-toast-body" id="toast-body">C Minor added to pool</div>
+</div>
+
+<script>
+'use strict';
+
+// ── THEORY ────────────────────────────────────────────────────────────────────
+const ALL_NOTES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+
+const FLAT_ROOTS = new Set(['F','Bb','Eb','Ab','Db','A#','D#','G#']);
+const TO_FLAT = {'C#':'Db','D#':'Eb','F#':'Gb','G#':'Ab','A#':'Bb'};
+const TO_SHARP= {'Db':'C#','Eb':'D#','Gb':'F#','Ab':'G#','Bb':'A#'};
+
+// Normalize any note name to its index in ALL_NOTES (handles flats)
+function noteToIdx(n){ return ALL_NOTES.indexOf(TO_SHARP[n] || n); }
+
+function nd(note, rootContext){
+  if(!rootContext) rootContext = note;
+  const rootSharp = TO_SHARP[rootContext] || rootContext;
+  if(FLAT_ROOTS.has(rootSharp) || FLAT_ROOTS.has(rootContext)){
+    return TO_FLAT[note] || note;
+  }
+  return note;
+}
+
+function respellTriad(notes, root){
+  const rootSharp = TO_SHARP[root] || root;
+  const useFlats = FLAT_ROOTS.has(rootSharp) || FLAT_ROOTS.has(root);
+  return notes.map(n => useFlats ? (TO_FLAT[n] || n) : n);
+}
+
+const TRIAD_IVLS = {
+  major:[0,4,7], minor:[0,3,7], dim:[0,3,6], aug:[0,4,8]
+};
+const TRIAD_NAMES = {major:'Major',minor:'Minor',dim:'Diminished',aug:'Augmented'};
+const INTV_LABELS = {
+  major:['Root','Major 3rd','Perfect 5th'],
+  minor:['Root','Minor 3rd','Perfect 5th'],
+  dim:  ['Root','Minor 3rd','Dim. 5th'],
+  aug:  ['Root','Major 3rd','Aug. 5th'],
+};
+const DEGREE_LABELS = ['1','♭2','2','♭3','3','4','♭5','5','♭6','6','♭7','7'];
+const INV_NAMES = ['Root Position','1st Inversion','2nd Inversion'];
+
+function buildTriad(root, type, inv){
+  const rootSharp = TO_SHARP[root] || root;
+  const ri = ALL_NOTES.indexOf(rootSharp);
+  const ivls = TRIAD_IVLS[type];
+  const base = ivls.map(i => ALL_NOTES[(ri+i)%12]);
+  const rotated = [...base];
+  for(let i=0;i<inv;i++) rotated.push(rotated.shift());
+  return respellTriad(rotated, rootSharp);
+}
+
+// ── TRIAD PROGRESSION POOL ────────────────────────────────────────────────────
+function shuffle(arr){ for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];} return arr; }
+
+function genUnlockOrder(){
+  const order = [];
+  const roots = ['C','G','D','A','E','B','F#','F','Bb','Eb','Ab','Db'];
+  const phases = [
+    {type:'major', inv:0}, {type:'minor', inv:0},
+    {type:'dim',   inv:0}, {type:'aug',   inv:0},
+    {type:'major', inv:1}, {type:'minor', inv:1},
+    {type:'major', inv:2}, {type:'minor', inv:2},
+    {type:'dim',   inv:1}, {type:'aug',   inv:1},
+    {type:'dim',   inv:2}, {type:'aug',   inv:2},
+  ];
+  for(const {type, inv} of phases)
+    for(const root of shuffle([...roots]))
+      order.push({root, type, inv});
+  return order;
+}
+
+const MASTER_POOL = genUnlockOrder();
+
+// ── TRIAD STATE ───────────────────────────────────────────────────────────────
+let UNLOCK_NEEDED = 5;
+let DROP_NEEDED   = 3;
+let TIMER_S       = 9.0;
+const TIMER_REWARD = 0.35;
+
+let unlockedCount = 1;
+let progHits      = 0;
+let progMisses    = 0;
+
+let activeTypeSet = new Set(['major','minor','dim','aug']);
+let activePosSet  = new Set([0,1,2]);
+let activeInvSet  = new Set([0]);
+
+let correct=0, total=0, dots=[];
+let currentQ  = null;
+let answered  = false;
+let timerFrac = 1.0;
+let timerRAF  = null;
+let timerLast = null;
+
+function getActivePool(){
+  const seen = new Set();
+  const pool = [];
+  for(let i=0;i<Math.min(unlockedCount,MASTER_POOL.length);i++){
+    const e = MASTER_POOL[i];
+    if(!activeTypeSet.has(e.type)) continue;
+    const inv = activeInvSet.has(e.inv) ? e.inv : 0;
+    const key = e.root+'|'+e.type+'|'+inv;
+    if(seen.has(key)) continue;
+    seen.add(key);
+    pool.push({...e, inv});
+  }
+  if(!pool.length) pool.push(MASTER_POOL[0]);
+  return pool;
+}
+
+function pickQuestion(){
+  const pool = getActivePool();
+  const pick = pool[Math.floor(Math.random()*pool.length)];
+  const notes = buildTriad(pick.root, pick.type, pick.inv);
+  const posOptions = [...activePosSet];
+  const missingPos = posOptions[Math.floor(Math.random()*posOptions.length)];
+  const correctNote = notes[missingPos];
+  return {...pick, notes, missingPos, correctNote};
+}
+
+// ── TRIAD TIMER ───────────────────────────────────────────────────────────────
+function startTimer(){
+  stopTimer();
+  timerLast = performance.now();
+  function tick(now){
+    if(answered){ timerRAF=null; return; }
+    const dt = (now-timerLast)/1000;
+    timerLast = now;
+    timerFrac = Math.max(0, timerFrac - dt/TIMER_S);
+    renderTimer();
+    if(timerFrac<=0){ timerRAF=null; handleTimeout(); }
+    else timerRAF = requestAnimationFrame(tick);
+  }
+  timerRAF = requestAnimationFrame(tick);
+}
+function stopTimer(){
+  if(timerRAF){ cancelAnimationFrame(timerRAF); timerRAF=null; }
+}
+function renderTimer(){
+  const el = document.getElementById('timer-fill');
+  el.style.width = (timerFrac*100)+'%';
+  if(timerFrac>0.5) el.style.background='var(--teal)';
+  else if(timerFrac>0.25) el.style.background='var(--accent)';
+  else el.style.background='var(--wrong)';
+}
+function handleTimeout(){
+  if(answered) return;
+  answered=true; total++; dots.push(false);
+  handleMissEvent();
+  setFeedback('Time — '+nd(currentQ.correctNote, currentQ.root), 'timeout');
+  revealAnswer();
+  updateStats();
+  setTimeout(nextQuestion, 1500);
+}
+
+// ── TRIAD PROGRESSION ─────────────────────────────────────────────────────────
+function handleHitEvent(){
+  progMisses=0;
+  timerFrac = Math.min(1, timerFrac + TIMER_REWARD);
+  progHits++;
+  if(progHits>=UNLOCK_NEEDED){ progHits=0; unlock(); }
+  updateProgUI();
+}
+function handleMissEvent(){
+  progHits=0; progMisses++;
+  if(progMisses>=DROP_NEEDED){ progMisses=0; dropBack(); }
+  updateProgUI();
+}
+function unlock(){
+  const nextIdx = unlockedCount;
+  if(nextIdx >= MASTER_POOL.length) return;
+  unlockedCount++;
+  const newly = MASTER_POOL[nextIdx];
+  showToast('Unlocked', nd(newly.root)+' '+TRIAD_NAMES[newly.type]+' · '+INV_NAMES[newly.inv]);
+  document.body.classList.remove('flash-unlock','flash-lock');
+  void document.body.offsetWidth;
+  document.body.classList.add('flash-unlock');
+}
+function dropBack(){
+  if(unlockedCount>1){
+    unlockedCount--;
+    document.body.classList.remove('flash-unlock','flash-lock');
+    void document.body.offsetWidth;
+    document.body.classList.add('flash-lock');
+  }
+  updateProgUI();
+}
+function updateProgUI(){
+  const nextIdx = Math.min(unlockedCount, MASTER_POOL.length-1);
+  const next = MASTER_POOL[nextIdx];
+  const atMax = unlockedCount >= MASTER_POOL.length;
+  document.getElementById('prog-label').textContent = atMax
+    ? 'All triads unlocked!'
+    : 'Unlock next: '+nd(next.root)+' '+TRIAD_NAMES[next.type]+(next.inv>0?' · '+INV_NAMES[next.inv]:'');
+  document.getElementById('prog-counter').textContent = atMax ? '✓' : progHits+' / '+UNLOCK_NEEDED;
+  document.getElementById('prog-fill').style.width = atMax ? '100%' : (progHits/UNLOCK_NEEDED*100)+'%';
+  const warn = document.getElementById('prog-warn');
+  if(progMisses === DROP_NEEDED-1 && unlockedCount>1){
+    const prev = MASTER_POOL[unlockedCount-2];
+    warn.textContent = '⚠ One more miss — drops to '+nd(prev.root)+' '+TRIAD_NAMES[prev.type];
+    warn.classList.add('show');
+  } else { warn.textContent=''; warn.classList.remove('show'); }
+}
+
+// ── DRAW TRIAD QUESTION ───────────────────────────────────────────────────────
+function drawQuestion(q, revealMissing){
+  document.getElementById('type-badge').textContent = TRIAD_NAMES[q.type];
+  document.getElementById('inv-badge').textContent  = INV_NAMES[q.inv];
+  document.getElementById('missing-label').textContent =
+    revealMissing ? 'Answer revealed' : 'Name the missing note';
+
+  const chordNameEl = document.getElementById('chord-name-display');
+  if(document.getElementById('show-chordname').checked){
+    chordNameEl.innerHTML = nd(q.root, q.root) + ' ' + TRIAD_NAMES[q.type];
+    chordNameEl.style.display = 'block';
+  } else { chordNameEl.style.display = 'none'; }
+
+  const showIntv = document.getElementById('show-intervals').checked;
+  const showDeg  = document.getElementById('show-degrees').checked;
+  const row = document.getElementById('bubbles-row');
+  row.innerHTML='';
+
+  const ri = noteToIdx(q.root);
+  const intLabels = INTV_LABELS[q.type];
+  const rootNotes = buildTriad(q.root, q.type, 0);
+
+  q.notes.forEach((note, i)=>{
+    const isMissing = (i === q.missingPos);
+    const div = document.createElement('div');
+    div.className = 'note-bubble' + (isMissing ? ' is-missing' : '');
+
+    if(isMissing && !revealMissing){
+      if(showIntv){
+        const missingRootPosIdx = rootNotes.findIndex(n=>noteToIdx(n)===noteToIdx(q.correctNote));
+        const intv = document.createElement('div');
+        intv.className='bubble-interval';
+        intv.textContent = missingRootPosIdx>=0 ? intLabels[missingRootPosIdx] : '—';
+        div.appendChild(intv);
+      }
+    } else {
+      if(isMissing) div.classList.remove('is-missing');
+      const noteEl = document.createElement('div');
+      noteEl.className='bubble-note';
+      noteEl.textContent = nd(note, q.root);
+      div.appendChild(noteEl);
+      if(showIntv){
+        const rootPosIdx = rootNotes.findIndex(n=>noteToIdx(n)===noteToIdx(note));
+        const intv = document.createElement('div');
+        intv.className='bubble-interval';
+        intv.textContent = rootPosIdx>=0 ? intLabels[rootPosIdx] : '—';
+        div.appendChild(intv);
+      }
+      if(showDeg){
+        const semi = (noteToIdx(note)-ri+12)%12;
+        const degEl = document.createElement('div');
+        degEl.className='bubble-degree';
+        degEl.textContent = DEGREE_LABELS[semi];
+        div.appendChild(degEl);
+      }
+    }
+    row.appendChild(div);
+  });
+
+  const staffWrap = document.getElementById('staff-wrap');
+  if(document.getElementById('show-staff').checked){
+    staffWrap.style.display='flex';
+    drawStaff(q.notes, q.missingPos, revealMissing);
+  } else { staffWrap.style.display='none'; }
+
+  updateHeaderSub(q);
+}
+
+function revealAnswer(){
+  const q = currentQ;
+  const row = document.getElementById('bubbles-row');
+  const bubbles = row.children;
+  if(bubbles[q.missingPos]){
+    bubbles[q.missingPos].classList.remove('is-missing');
+    bubbles[q.missingPos].innerHTML='';
+    const noteEl=document.createElement('div');
+    noteEl.className='bubble-note';
+    noteEl.textContent=nd(q.correctNote, q.root);
+    bubbles[q.missingPos].appendChild(noteEl);
+    if(document.getElementById('show-intervals').checked){
+      const rootNotes = buildTriad(q.root,q.type,0);
+      const rpi = rootNotes.findIndex(n=>noteToIdx(n)===noteToIdx(q.correctNote));
+      const intv=document.createElement('div');
+      intv.className='bubble-interval';
+      intv.textContent=rpi>=0?INTV_LABELS[q.type][rpi]:'—';
+      bubbles[q.missingPos].appendChild(intv);
+    }
+  }
+  if(document.getElementById('show-staff').checked) drawStaff(q.notes,q.missingPos,true);
+}
+
+// ── STAFF SVG ─────────────────────────────────────────────────────────────────
+const LETTERS=['C','D','E','F','G','A','B'];
+
+function drawStaff(notes, missingPos, revealed){
+  const svg = document.getElementById('staff-svg');
+  const W=210, H=100;
+  const lineSpacing=9;
+  const staffTop=18;
+  function slotY(slot){ return staffTop + (10-slot)*(lineSpacing/2); }
+  function noteSlot(noteName){ const letter=noteName[0].toUpperCase(); return LETTERS.indexOf(letter); }
+  let slots=notes.map(noteSlot);
+  for(let i=1;i<slots.length;i++) while(slots[i]<=slots[i-1]) slots[i]+=7;
+  const minS=Math.min(...slots);
+  if(minS<0) slots=slots.map(s=>s+7);
+  const maxS=Math.max(...slots);
+  if(maxS>11) slots=slots.map(s=>s-7);
+
+  let html='';
+  for(let i=0;i<5;i++){
+    const y=staffTop+i*lineSpacing;
+    html+=`<line x1="32" y1="${y}" x2="${W-8}" y2="${y}" stroke="rgba(232,228,218,0.25)" stroke-width="1"/>`;
+  }
+  html+=`<text x="29" y="${staffTop+30}" font-size="48" fill="rgba(200,168,75,0.6)" font-family="serif" text-anchor="middle">𝄞</text>`;
+
+  const noteX=[85,120,155];
+  for(let i=0;i<slots.length;i++){
+    const slot=slots[i];
+    const y=slotY(slot);
+    const x=noteX[i];
+    const isMissing=(i===missingPos);
+    const isHidden=(isMissing && !revealed);
+    const noteDisp2=nd(notes[i]);
+    if(slot<=1){
+      html+=`<line x1="${x-13}" y1="${slotY(2)-lineSpacing}" x2="${x+13}" y2="${slotY(2)-lineSpacing}" stroke="rgba(232,228,218,0.3)" stroke-width="1"/>`;
+    }
+    if(slot>=12){
+      for(let ls=12;ls<=slot;ls+=2)
+        html+=`<line x1="${x-13}" y1="${slotY(ls)}" x2="${x+13}" y2="${slotY(ls)}" stroke="rgba(232,228,218,0.3)" stroke-width="1"/>`;
+    }
+    const color = isHidden ? 'rgba(200,168,75,0.2)' : (isMissing ? 'var(--teal)' : 'var(--accent)');
+    html+=`<ellipse cx="${x}" cy="${y}" rx="6.5" ry="5" fill="${color}" transform="rotate(-15,${x},${y})"/>`;
+    if(!isHidden){
+      html+=`<line x1="${x+6}" y1="${y}" x2="${x+6}" y2="${y-26}" stroke="${color}" stroke-width="1.5"/>`;
+      if(noteDisp2.includes('#'))
+        html+=`<text x="${x-15}" y="${y+4}" font-size="13" fill="${color}" font-family="serif">#</text>`;
+      if(noteDisp2.endsWith('b'))
+        html+=`<text x="${x-13}" y="${y+5}" font-size="14" fill="${color}" font-family="serif">♭</text>`;
+    } else {
+      html+=`<text x="${x}" y="${y+4}" font-size="12" fill="rgba(200,168,75,0.4)" font-family="IBM Plex Mono,monospace" text-anchor="middle">?</text>`;
+    }
+    html+=`<text x="${x}" y="${H-3}" font-size="8" fill="${isHidden?'rgba(200,168,75,0.2)':'rgba(127,191,176,0.7)'}" font-family="IBM Plex Mono,monospace" text-anchor="middle">${isHidden?'?':noteDisp2}</text>`;
+  }
+  svg.innerHTML=html;
+}
+
+// ── TRIAD ANSWER BUTTONS ──────────────────────────────────────────────────────
+function buildAnswerGrid(useFlats){
+  const grid = document.getElementById('note-grid');
+  grid.innerHTML='';
+  const naturals = ['C','D','E','F','G','A','B'];
+  const accidentals = useFlats
+    ? ['Db','Eb','Gb','Ab','Bb']
+    : ['C#','D#','F#','G#','A#'];
+  [...naturals, ...accidentals].forEach(note=>{
+    const btn=document.createElement('button');
+    btn.className='note-btn';
+    btn.textContent=note;
+    btn.dataset.note=note;
+    btn.onclick=()=>handleAnswer(note,btn);
+    grid.appendChild(btn);
+  });
+}
+
+function handleAnswer(note, btn){
+  if(answered) return;
+  answered=true; stopTimer(); total++;
+  const hit = noteToIdx(note) === noteToIdx(currentQ.correctNote);
+  if(hit){
+    correct++; dots.push(true);
+    btn.classList.add('correct');
+    handleHitEvent();
+    setFeedback('Correct', '');
+    revealAnswer();
+    updateStats();
+    setTimeout(nextQuestion, 750);
+  } else {
+    dots.push(false);
+    btn.classList.add('wrong');
+    handleMissEvent();
+    if(document.getElementById('reveal-on-wrong').checked){
+      document.querySelectorAll('.note-btn').forEach(b=>{
+        if(noteToIdx(b.dataset.note) === noteToIdx(currentQ.correctNote))
+          b.classList.add('correct');
+      });
+      revealAnswer();
+    }
+    setFeedback('Wrong — '+nd(currentQ.correctNote, currentQ.root),'wrong');
+    updateStats();
+    setTimeout(nextQuestion, 1400);
+  }
+}
+
+function nextQuestion(){
+  answered=false;
+  setFeedback('','');
+  currentQ = pickQuestion();
+  const rootSharp = TO_SHARP[currentQ.root] || currentQ.root;
+  const useFlats = FLAT_ROOTS.has(rootSharp) || FLAT_ROOTS.has(currentQ.root);
+  buildAnswerGrid(useFlats);
+  timerFrac=1.0; renderTimer();
+  drawQuestion(currentQ, false);
+  startTimer();
+}
+
+// ── TRIAD STATS ───────────────────────────────────────────────────────────────
+function updateStats(){
+  document.getElementById('h-correct').textContent=correct;
+  const streak=currentStreak(dots);
+  document.getElementById('h-streak').textContent=streak;
+  document.getElementById('h-pct').textContent=total?Math.round(100*correct/total)+'%':'—';
+  document.getElementById('streak-row').innerHTML=dots.slice(-16).map(d=>`<div class="sdot ${d?'h':'m'}"></div>`).join('');
+}
+function currentStreak(d){ let s=0; for(let i=d.length-1;i>=0;i--){if(d[i])s++;else break;} return s; }
+function setFeedback(msg,cls){
+  const el=document.getElementById('feedback');
+  el.textContent=msg; el.className='feedback-line'+(cls?' '+cls:'');
+}
+function updateHeaderSub(q){
+  if(!q) return;
+  document.getElementById('hdr-sub').textContent=nd(q.root)+' '+TRIAD_NAMES[q.type]+' · '+INV_NAMES[q.inv];
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+let toastTimer=null;
+function showToast(title,body){
+  const t=document.getElementById('unlock-toast');
+  document.getElementById('toast-title').textContent=title;
+  document.getElementById('toast-body').textContent=body;
+  t.classList.add('show');
+  if(toastTimer) clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+// ── TRIAD SETTINGS ────────────────────────────────────────────────────────────
+function toggleCfg(){
+  const panel=document.getElementById('cfg-panel');
+  const btn=document.getElementById('cfg-btn');
+  const open=panel.classList.toggle('open');
+  btn.textContent=open?'Settings ▲':'Settings ▾';
+  if(open) stopTimer(); else if(!answered) startTimer();
+}
+function toggleType(btn){
+  const t=btn.dataset.t;
+  if(activeTypeSet.has(t)){ if(activeTypeSet.size>1){ activeTypeSet.delete(t); btn.classList.remove('on'); } }
+  else { activeTypeSet.add(t); btn.classList.add('on'); }
+}
+function togglePos(btn){
+  const p=parseInt(btn.dataset.p);
+  if(activePosSet.has(p)){ if(activePosSet.size>1){ activePosSet.delete(p); btn.classList.remove('on'); } }
+  else { activePosSet.add(p); btn.classList.add('on'); }
+}
+function toggleInv(btn){
+  const i=parseInt(btn.dataset.i);
+  if(activeInvSet.has(i)){ if(activeInvSet.size>1){ activeInvSet.delete(i); btn.classList.remove('on'); } }
+  else { activeInvSet.add(i); btn.classList.add('on'); }
+}
+function setSpeed(btn){
+  document.querySelectorAll('#cfg-panel .speed-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on'); TIMER_S=parseFloat(btn.dataset.s);
+}
+function redraw(){ if(currentQ) drawQuestion(currentQ,answered); }
+function resetAll(){
+  correct=0;total=0;dots=[];
+  unlockedCount=1; progHits=0; progMisses=0;
+  updateStats(); updateProgUI(); nextQuestion();
+}
+
+// ── TAB SWITCHING ─────────────────────────────────────────────────────────────
+function switchTab(name){
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>
+    b.classList.toggle('active', ['triads','diatonic'][i]===name));
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  if(name==='triads'){
+    dStopTimer();
+    if(!answered) startTimer();
+  } else {
+    stopTimer();
+    if(!dAnswered) dStartTimer();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DIATONIC CHORD DRILL
+// ═══════════════════════════════════════════════════════════════════════════
+
+// All 7 diatonic degrees with their semitone offsets and qualities
+const DIATONIC = [
+  {roman:'I',    semi:0,  quality:'major'},
+  {roman:'ii',   semi:2,  quality:'minor'},
+  {roman:'iii',  semi:4,  quality:'minor'},
+  {roman:'IV',   semi:5,  quality:'major'},
+  {roman:'V',    semi:7,  quality:'major'},
+  {roman:'vi',   semi:9,  quality:'minor'},
+  {roman:'vii°', semi:11, quality:'dim'},
+];
+
+// Keys in circle-of-5ths order
+const D_KEYS = ['C','G','D','A','E','B','F#','F','Bb','Eb','Ab','Db'];
+
+// Progression tiers: each tier defines which degree indices are active.
+// Keys unlock one at a time within each tier. Finishing all 12 keys advances the tier.
+const D_TIERS = [
+  { label:'I · IV · V',            degrees:[0,3,4]       }, // I IV V
+  { label:'I · ii · IV · V · vi',  degrees:[0,1,3,4,5]   }, // add ii and vi
+  { label:'I · ii · iii · IV · V · vi', degrees:[0,1,2,3,4,5] }, // add iii
+  { label:'Full diatonic',          degrees:[0,1,2,3,4,5,6] }, // add vii°
+];
+
+// State
+let D_UNLOCK_NEEDED = 5;
+let D_DROP_NEEDED   = 3;
+let D_TIMER_S       = 9.0;
+const D_TIMER_REWARD = 0.35;
+
+let dTier          = 0;  // current tier index (0-3)
+let dUnlockedKeys  = 1;  // how many keys are unlocked within the current tier (1-12)
+let dHits          = 0;
+let dMisses        = 0;
+let dCorrect       = 0, dTotal = 0, dDots = [];
+let dCurrentQ      = null;
+let dAnswered      = false;
+let dTimerFrac     = 1.0;
+let dTimerRAF      = null;
+let dTimerLast     = null;
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+
+// Get the root note of diatonic degree `di` in `key`
+function dGetChordRoot(key, di){
+  const keyIdx = noteToIdx(key);
+  const semi   = DIATONIC[di].semi;
+  const sharpNote = ALL_NOTES[(keyIdx + semi) % 12];
+  const useFlats = FLAT_ROOTS.has(TO_SHARP[key]||key) || FLAT_ROOTS.has(key);
+  return useFlats ? (TO_FLAT[sharpNote] || sharpNote) : sharpNote;
+}
+
+function dActiveKeys(){ return D_KEYS.slice(0, dUnlockedKeys); }
+function dActiveDegrees(){ return D_TIERS[dTier].degrees; }
+
+function dPickQuestion(){
+  const keys    = dActiveKeys();
+  const degrees = dActiveDegrees();
+  const key = keys[Math.floor(Math.random() * keys.length)];
+  const di  = degrees[Math.floor(Math.random() * degrees.length)];
+  const deg = DIATONIC[di];
+  const root = dGetChordRoot(key, di);
+  return {key, di, degree: deg, root, correctNote: root};
+}
+
+// ── TIMER ─────────────────────────────────────────────────────────────────────
+function dStartTimer(){
+  dStopTimer();
+  dTimerLast = performance.now();
+  function tick(now){
+    if(dAnswered){ dTimerRAF=null; return; }
+    const dt=(now-dTimerLast)/1000; dTimerLast=now;
+    dTimerFrac=Math.max(0, dTimerFrac-dt/D_TIMER_S);
+    dRenderTimer();
+    if(dTimerFrac<=0){ dTimerRAF=null; dHandleTimeout(); }
+    else dTimerRAF=requestAnimationFrame(tick);
+  }
+  dTimerRAF=requestAnimationFrame(tick);
+}
+function dStopTimer(){ if(dTimerRAF){cancelAnimationFrame(dTimerRAF);dTimerRAF=null;} }
+function dRenderTimer(){
+  const el=document.getElementById('d-timer-fill');
+  el.style.width=(dTimerFrac*100)+'%';
+  el.style.background=dTimerFrac>0.5?'var(--teal)':dTimerFrac>0.25?'var(--accent)':'var(--wrong)';
+}
+function dHandleTimeout(){
+  if(dAnswered) return;
+  dAnswered=true; dTotal++; dDots.push(false);
+  dMissEvent();
+  dSetFeedback('Time — '+dCurrentQ.correctNote,'timeout');
+  dReveal();
+  dUpdateStats();
+  setTimeout(dNext, 1500);
+}
+
+// ── PROGRESSION ───────────────────────────────────────────────────────────────
+function dHitEvent(){
+  dMisses=0;
+  dTimerFrac=Math.min(1, dTimerFrac+D_TIMER_REWARD);
+  dHits++;
+  if(dHits>=D_UNLOCK_NEEDED){ dHits=0; dAdvance(); }
+  dUpdateProgUI();
+}
+function dMissEvent(){
+  dHits=0; dMisses++;
+  if(dMisses>=D_DROP_NEEDED){
+    dMisses=0;
+    if(dUnlockedKeys>1){
+      dUnlockedKeys--;
+      document.body.classList.remove('flash-unlock','flash-lock');
+      void document.body.offsetWidth;
+      document.body.classList.add('flash-lock');
+    }
+    // Don't drop tiers on miss — too punishing
+  }
+  dUpdateProgUI();
+}
+
+function dAdvance(){
+  if(dUnlockedKeys < D_KEYS.length){
+    // Unlock next key in this tier
+    dUnlockedKeys++;
+    const newKey = D_KEYS[dUnlockedKeys-1];
+    const tierLabel = D_TIERS[dTier].label;
+    showToast('New key!', newKey + ' · ' + tierLabel);
+    document.body.classList.remove('flash-unlock','flash-lock');
+    void document.body.offsetWidth;
+    document.body.classList.add('flash-unlock');
+  } else if(dTier < D_TIERS.length-1){
+    // All 12 keys mastered in this tier — advance to next tier
+    dTier++;
+    dUnlockedKeys = 1; // start with just C in the new tier
+    const tierLabel = D_TIERS[dTier].label;
+    showToast('Tier unlocked!', tierLabel);
+    document.body.classList.remove('flash-unlock','flash-lock');
+    void document.body.offsetWidth;
+    document.body.classList.add('flash-unlock');
+  }
+  dUpdateProgUI();
+}
+
+function dUpdateProgUI(){
+  const allKeysUnlocked = dUnlockedKeys >= D_KEYS.length;
+  const allTiersUnlocked = dTier >= D_TIERS.length-1;
+  const atMax = allKeysUnlocked && allTiersUnlocked;
+
+  const tierLabel = D_TIERS[dTier].label;
+  const curKey = D_KEYS[dUnlockedKeys-1];
+
+  let progLabel;
+  if(atMax){
+    progLabel = 'All degrees mastered!';
+  } else if(allKeysUnlocked){
+    progLabel = tierLabel + ' — unlock next tier';
+  } else {
+    const nextKey = D_KEYS[dUnlockedKeys];
+    progLabel = tierLabel + ' · unlock ' + nextKey;
+  }
+
+  document.getElementById('d-prog-label').textContent = progLabel;
+  document.getElementById('d-prog-counter').textContent = atMax?'✓':dHits+' / '+D_UNLOCK_NEEDED;
+  document.getElementById('d-prog-fill').style.width = atMax?'100%':(dHits/D_UNLOCK_NEEDED*100)+'%';
+
+  const warn=document.getElementById('d-prog-warn');
+  if(dMisses===D_DROP_NEEDED-1 && dUnlockedKeys>1){
+    const prev=D_KEYS[dUnlockedKeys-2];
+    warn.textContent='⚠ One more miss — drops '+D_KEYS[dUnlockedKeys-1]+' from pool';
+    warn.classList.add('show');
+  } else { warn.textContent=''; warn.classList.remove('show'); }
+}
+
+// ── DRAW QUESTION ─────────────────────────────────────────────────────────────
+function dDrawQuestion(q, revealed){
+  const showQuality = document.getElementById('d-show-quality').checked;
+  const showChips   = document.getElementById('d-show-chips').checked;
+  const showName    = document.getElementById('d-show-name').checked;
+
+  document.getElementById('d-key').textContent = nd(q.key, q.key);
+  document.getElementById('d-degree').innerHTML =
+    'What is the <strong>'+q.degree.roman+'</strong> chord?';
+
+  const qb = document.getElementById('d-quality-badge');
+  if(showQuality){
+    qb.textContent = q.degree.quality.charAt(0).toUpperCase()+q.degree.quality.slice(1);
+    qb.className = 'quality-badge '+q.degree.quality;
+    qb.style.display='inline-block';
+  } else { qb.style.display='none'; }
+
+  const cn = document.getElementById('d-chord-name');
+  if(revealed && showName){
+    const qualSym = {major:'',minor:'m',dim:'°'};
+    cn.textContent = q.correctNote+(qualSym[q.degree.quality]||'');
+  } else { cn.textContent=''; }
+
+  // Degree chips — show only active degrees for current tier, highlight current
+  const chipsEl = document.getElementById('d-degree-chips');
+  if(showChips){
+    chipsEl.style.display='flex';
+    chipsEl.innerHTML = dActiveDegrees().map(i=>{
+      const d = DIATONIC[i];
+      const isCurrent = i===q.di;
+      return `<span class="degree-chip ${isCurrent?'current':'unlocked'}">${d.roman}</span>`;
+    }).join('');
+  } else { chipsEl.style.display='none'; }
+}
+
+function dReveal(){
+  dDrawQuestion(dCurrentQ, true);
+  document.querySelectorAll('#d-note-grid .note-btn').forEach(b=>{
+    if(noteToIdx(b.dataset.note) === noteToIdx(dCurrentQ.correctNote))
+      b.classList.add('correct');
+  });
+}
+
+// ── ANSWER BUTTONS ────────────────────────────────────────────────────────────
+function dBuildNoteGrid(key){
+  const grid=document.getElementById('d-note-grid');
+  grid.innerHTML='';
+  const useFlats = FLAT_ROOTS.has(TO_SHARP[key]||key) || FLAT_ROOTS.has(key);
+  const naturals = ['C','D','E','F','G','A','B'];
+  const accidentals = useFlats
+    ? ['Db','Eb','Gb','Ab','Bb']
+    : ['C#','D#','F#','G#','A#'];
+  [...naturals, ...accidentals].forEach(note=>{
+    const btn=document.createElement('button');
+    btn.className='note-btn';
+    btn.textContent=note;
+    btn.dataset.note=note;
+    btn.onclick=()=>dHandleAnswer(note,btn);
+    grid.appendChild(btn);
+  });
+}
+
+function dHandleAnswer(note, btn){
+  if(dAnswered) return;
+  dAnswered=true; dStopTimer(); dTotal++;
+  const hit = noteToIdx(note) === noteToIdx(dCurrentQ.correctNote);
+  if(hit){
+    dCorrect++; dDots.push(true);
+    btn.classList.add('correct');
+    dHitEvent();
+    dSetFeedback('Correct','');
+    dReveal();
+    dUpdateStats();
+    setTimeout(dNext, 800);
+  } else {
+    dDots.push(false);
+    btn.classList.add('wrong');
+    dMissEvent();
+    dReveal();
+    dSetFeedback('Wrong — '+dCurrentQ.correctNote,'wrong');
+    dUpdateStats();
+    setTimeout(dNext, 1400);
+  }
+}
+
+function dNext(){
+  dAnswered=false;
+  dSetFeedback('','');
+  dCurrentQ=dPickQuestion();
+  dTimerFrac=1.0; dRenderTimer();
+  dBuildNoteGrid(dCurrentQ.key);
+  dDrawQuestion(dCurrentQ, false);
+  dStartTimer();
+}
+
+function dUpdateStats(){
+  document.getElementById('h-correct').textContent=dCorrect;
+  const streak=s=>{ let c=0; for(let i=s.length-1;i>=0;i--){if(s[i])c++;else break;} return c; };
+  document.getElementById('h-streak').textContent=streak(dDots);
+  document.getElementById('h-pct').textContent=dTotal?Math.round(100*dCorrect/dTotal)+'%':'—';
+  document.getElementById('d-streak-row').innerHTML=
+    dDots.slice(-16).map(d=>`<div class="sdot ${d?'h':'m'}"></div>`).join('');
+}
+
+function dSetFeedback(msg,cls){
+  const el=document.getElementById('d-feedback');
+  el.textContent=msg; el.className='feedback-line'+(cls?' '+cls:'');
+}
+function dRedraw(){ if(dCurrentQ) dDrawQuestion(dCurrentQ, dAnswered); }
+function dSetSpeed(btn){
+  document.querySelectorAll('#d-cfg-panel .speed-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on'); D_TIMER_S=parseFloat(btn.dataset.s);
+}
+function dToggleCfg(){
+  const panel=document.getElementById('d-cfg-panel');
+  const btn=document.getElementById('d-cfg-btn');
+  const open=panel.classList.toggle('open');
+  btn.textContent=open?'Settings ▲':'Settings ▾';
+  if(open) dStopTimer(); else if(!dAnswered) dStartTimer();
+}
+function dResetAll(){
+  dCorrect=0;dTotal=0;dDots=[];
+  dTier=0;dUnlockedKeys=1;dHits=0;dMisses=0;
+  dUpdateProgUI(); dUpdateStats(); dNext();
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+dUpdateProgUI();
+dCurrentQ=dPickQuestion();
+dBuildNoteGrid(dCurrentQ.key);
+dDrawQuestion(dCurrentQ,false);
+// Diatonic timer starts only when tab is active (starts on triads tab by default)
+
+updateProgUI();
+updateStats();
+nextQuestion();
+</script>
+</body>
+</html>
